@@ -322,10 +322,10 @@ export const paperTheme: DashboardTheme = {
   },
   typography: {
     ...DEFAULT_TYPOGRAPHY,
-    fontSans: `"Inter", ${SYSTEM_SANS}`,
-    fontMono: `"JetBrains Mono", ${SYSTEM_MONO}`,
+    fontSans: `"DM Sans", ${SYSTEM_SANS}`,
+    fontMono: `"DM Mono", ${SYSTEM_MONO}`,
     fontUrl:
-      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
+      "https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap",
     lineHeight: "1.6",
     letterSpacing: "-0.01em",
   },
