@@ -1879,7 +1879,7 @@ def run_conversation(
                         ctx = agent.context_compressor.context_length
                         if getattr(agent.context_compressor, "_context_probe_persistable", False):
                             save_context_length(agent.model, agent.base_url, ctx)
-                            agent._safe_print(f"{agent.log_prefix}💾 Cached context length: {ctx:,} tokens for {agent.model}")
+                            agent._safe_print(f"{agent.log_prefix}💾 已缓存上下文长度: {ctx:,} tokens (模型 {agent.model})")
                         agent.context_compressor._context_probed = False
                         agent.context_compressor._context_probe_persistable = False
 
@@ -1980,9 +1980,9 @@ def run_conversation(
                     if (cached or written) and not agent.quiet_mode:
                         hit_pct = (cached / prompt * 100) if prompt > 0 else 0
                         agent._vprint(
-                            f"{agent.log_prefix}   💾 Cache: "
+                            f"{agent.log_prefix}   💾 缓存: "
                             f"{cached:,}/{prompt:,} tokens "
-                            f"({hit_pct:.0f}% hit, {written:,} written)"
+                            f"(命中 {hit_pct:.0f}%, 写入 {written:,})"
                         )
                 
                 _retry.has_retried_429 = False  # Reset on success

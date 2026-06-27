@@ -2003,12 +2003,12 @@ def _dequeue_pending_event(adapter, session_key: str) -> MessageEvent | None:
     return adapter.get_pending_message(session_key)
 
 
-_INTERRUPT_REASON_STOP = "Stop requested"
-_INTERRUPT_REASON_RESET = "Session reset requested"
-_INTERRUPT_REASON_TIMEOUT = "Execution timed out (inactivity)"
-_INTERRUPT_REASON_SSE_DISCONNECT = "SSE client disconnected"
-_INTERRUPT_REASON_GATEWAY_SHUTDOWN = "Gateway shutting down"
-_INTERRUPT_REASON_GATEWAY_RESTART = "Gateway restarting"
+_INTERRUPT_REASON_STOP = "已请求停止"
+_INTERRUPT_REASON_RESET = "已请求重置会话"
+_INTERRUPT_REASON_TIMEOUT = "执行超时（无活动）"
+_INTERRUPT_REASON_SSE_DISCONNECT = "SSE 客户端断开"
+_INTERRUPT_REASON_GATEWAY_SHUTDOWN = "网关关闭中"
+_INTERRUPT_REASON_GATEWAY_RESTART = "网关重启中"
 
 _CONTROL_INTERRUPT_MESSAGES = frozenset(
     {
@@ -2405,10 +2405,10 @@ def _normalize_empty_agent_response(
     if api_calls > 0 and not agent_result.get("interrupted"):
         if agent_result.get("partial"):
             err = agent_result.get("error", "processing incomplete")
-            return f"⚠️ Processing stopped: {str(err)[:200]}. Try again."
+            return f"⚠️ 处理已停止：{str(err)[:200]}。请重试。"
         return (
-            "⚠️ Processing completed but no response was generated. "
-            "This may be a transient error — try sending your message again."
+            "⚠️ 处理完成但未生成回复。"
+            "这可能是临时错误 — 请重新发送消息。"
         )
 
     # api_calls == 0, not failed, not interrupted: the agent never ran for
@@ -3865,10 +3865,10 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 logger.debug("scale-to-zero watcher iteration error", exc_info=True)
 
     def _status_action_label(self) -> str:
-        return "restart" if self._restart_requested else "shutdown"
+        return "重启" if self._restart_requested else "关闭"
 
     def _status_action_gerund(self) -> str:
-        return "restarting" if self._restart_requested else "shutting down"
+        return "重启中" if self._restart_requested else "关闭中"
 
     def _queue_during_drain_enabled(self) -> bool:
         # Both "queue" and "steer" modes imply the user doesn't want messages
@@ -4645,9 +4645,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             thread_meta = self._thread_metadata_for_source(event.source, reply_anchor)
             if self._queue_during_drain_enabled():
                 self._queue_or_replace_pending_event(session_key, event)
-                message = f"⏳ Gateway {self._status_action_gerund()} — queued for the next turn after it comes back."
+                message = f"⏳ 网关{self._status_action_gerund()} — 已排队，恢复后处理。"
             else:
-                message = f"⏳ Gateway is {self._status_action_gerund()} and is not accepting another turn right now."
+                message = f"⏳ 网关正在{self._status_action_gerund()}，暂不接收新请求。"
 
             await adapter._send_with_retry(
                 chat_id=event.source.chat_id,
@@ -4826,17 +4826,17 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # follow-up didn't accidentally kill the subagent and
             # discovers `/stop` as the explicit escape hatch.
             message = (
-                f"⏳ Subagent working{status_detail} — your message is queued for "
+                f"⏳ 子任务处理中{status_detail} — 消息已排队，"
                 f"when it finishes (use /stop to cancel everything)."
             )
         elif is_queue_mode:
             message = (
-                f"⏳ Queued for the next turn{status_detail}. "
+                f"⏳ 已排队等待下一轮{status_detail}。"
                 f"I'll respond once the current task finishes."
             )
         else:
             message = (
-                f"⚡ Interrupting current task{status_detail}. "
+                f"⚡ 正在中断当前任务{status_detail}。"
                 f"I'll respond to your message shortly."
             )
 
@@ -8298,8 +8298,8 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # producing a zero-char response. See #5057, #6252, #10370.
             if _cmd_def_inner:
                 return (
-                    f"⏳ Agent is running — `/{_cmd_def_inner.name}` can't run "
-                    f"mid-turn. Wait for the current response or `/stop` first."
+                    f"⏳ Agent 正在运行 — `/{_cmd_def_inner.name}` 无法在 "
+                    f"任务中途执行。请等待当前回复或先 `/stop`。"
                 )
 
             if event.message_type == MessageType.PHOTO:
@@ -8345,7 +8345,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                     # Force-clean the sentinel so the session is unlocked.
                     self._release_running_agent_state(_quick_key)
                     logger.info("HARD STOP (pending) for session %s — sentinel cleared", _quick_key)
-                    return EphemeralReply("⚡ Force-stopped. The agent was still starting — session unlocked.")
+                    return EphemeralReply("⚡ 已强制停止。Agent 仍在启动 — 会话已解锁。")
                 # Queue the message so it will be picked up after the
                 # agent starts.
                 adapter = self.adapters.get(source.platform)
@@ -8361,9 +8361,9 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 if self._queue_during_drain_enabled():
                     self._queue_or_replace_pending_event(_quick_key, event)
                 return (
-                    f"⏳ Gateway {self._status_action_gerund()} — queued for the next turn after it comes back."
+                    f"⏳ 网关{self._status_action_gerund()} — 已排队，恢复后处理。"
                     if self._queue_during_drain_enabled()
-                    else f"⏳ Gateway is {self._status_action_gerund()} and is not accepting another turn right now."
+                    else f"⏳ 网关正在{self._status_action_gerund()}，暂不接收新请求。"
                 )
             if self._busy_input_mode == "queue":
                 logger.debug("PRIORITY queue follow-up for session %s", _quick_key)
@@ -8806,7 +8806,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             return await self._handle_voice_command(event)
 
         if self._draining:
-            return f"⏳ Gateway is {self._status_action_gerund()} and is not accepting new work right now."
+            return f"⏳ 网关正在{self._status_action_gerund()}，暂不接收新任务。"
 
         # User-defined quick commands (bypass agent loop, no LLM call)
         if command:
@@ -13218,7 +13218,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             )
             result = await adapter.send(
                 str(chat_id),
-                "♻ Gateway restarted successfully. Your session continues.",
+                "♻ 网关重启成功，会话继续。",
                 metadata=_non_conversational_metadata(metadata, platform=platform),
             )
             # adapter.send() catches provider errors (e.g. "Chat not found")
@@ -13259,7 +13259,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
         """
         delivered: set[tuple[str, str, Optional[str]]] = set()
         skipped = skip_targets or set()
-        message = "♻️ Gateway online — Hermes is back and ready."
+        message = "♻️ 网关已上线 — Hermes 恢复就绪。"
 
         for platform, adapter in self.adapters.items():
             home = self.config.get_home_channel(platform)
@@ -17141,7 +17141,7 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                             _status_detail = " — " + ", ".join(_parts)
                     except Exception:
                         pass
-                _heartbeat_text = f"⏳ Working — {_elapsed_mins} min{_status_detail}"
+                _heartbeat_text = f"⏳ 工作中 — {_elapsed_mins} 分钟{_status_detail}"
                 try:
                     _notify_res = None
                     if _heartbeat_msg_id:

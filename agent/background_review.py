@@ -470,7 +470,7 @@ def summarize_background_review_actions(
         if is_skill:
             label = "Skill"
         elif target:
-            label = "Memory" if target == "memory" else "User profile" if target == "user" else target
+            label = "记忆" if target == "memory" else "用户画像" if target == "user" else target
         else:
             continue
 
@@ -494,15 +494,15 @@ def summarize_background_review_actions(
                         "…" if len(new_string) > 80 else ""
                     )
                     actions.append(
-                        f"📝 Skill '{skill_name}' patched: "
+                        f"📝 技能 '{skill_name}' 已补丁: "
                         f"\"{old_preview}\" → \"{new_preview}\""
                     )
                 elif action == "create" and description:
-                    actions.append(f"📝 Skill '{skill_name}' created: {description}")
+                    actions.append(f"📝 技能 '{skill_name}' 已创建: {description}")
                 elif action == "edit" and description:
-                    actions.append(f"📝 Skill '{skill_name}' rewritten: {description}")
+                    actions.append(f"📝 技能 '{skill_name}' 已重写: {description}")
                 else:
-                    actions.append(f"📝 {message}" if message else f"Skill {action}")
+                    actions.append(f"📝 {message}" if message else f"技能 {action}")
             elif operations:
                 for op in operations:
                     op = op or {}
@@ -793,13 +793,13 @@ def _run_review_in_thread(
         if actions:
             summary = " · ".join(dict.fromkeys(actions))
             agent._safe_print(
-                f"  💾 Self-improvement review: {summary}"
+                f"  💾 自我改进复盘: {summary}"
             )
             _bg_cb = agent.background_review_callback
             if _bg_cb:
                 try:
                     _bg_cb(
-                        f"💾 Self-improvement review: {summary}"
+                        f"💾 自我改进复盘: {summary}"
                     )
                 except Exception:
                     pass

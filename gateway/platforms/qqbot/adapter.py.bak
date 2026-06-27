@@ -35,7 +35,6 @@ import asyncio
 import base64
 import json
 import logging
-import re
 import mimetypes
 import os
 import time
@@ -2644,14 +2643,6 @@ class QQAdapter(BasePlatformAdapter):
         msg_id = str(data.get("id", uuid.uuid4().hex[:12]))
         return SendResult(success=True, message_id=msg_id, raw_response=data)
 
-    _MEDIA_TAG_RE = re.compile(
-        r'MEDIA:(/\S+\.(?:png|jpe?g|gif|webp|'
-        r'mp4|mov|avi|mkv|webm|ogg|opus|mp3|wav|m4a|'
-        r'flac|epub|pdf|zip|rar|7z|docx?|xlsx?|pptx?|'
-        r'txt|csv|apk|ipa))',
-        re.IGNORECASE,
-    )
-
     async def _send_group_text(
             self,
             group_openid: str,
@@ -2663,29 +2654,6 @@ class QQAdapter(BasePlatformAdapter):
 
         :param keyboard: Optional inline keyboard attached to the message.
         """
-        # ── MEDIA: tag interceptor ────────────────────────────
-        # Extract and send MEDIA: paths as native QQ images/files
-        # before delivering the cleaned text.  Mirrors the
-        # openclaw-qqbot <qqimg> pattern.
-        media_paths = self._MEDIA_TAG_RE.findall(content)
-        if media_paths:
-            import os as _os
-            cleaned = self._MEDIA_TAG_RE.sub("", content).strip()
-            cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
-            # Send media first (images appear before text on QQ)
-            for mpath in media_paths:
-                expanded = _os.path.expanduser(mpath)
-                if _os.path.isfile(expanded):
-                    ext = _os.path.splitext(expanded)[1].lower()
-                    if ext in {'.jpg', '.jpeg', '.png', '.gif', '.webp'}:
-                        await self.send_image_file(group_openid, expanded, reply_to=reply_to)
-                    else:
-                        await self.send_document(group_openid, expanded, reply_to=reply_to)
-            if not cleaned:
-                return SendResult(success=True, message_id="media_only")
-            content = cleaned
-        # ── end interceptor ─────────────────────────────────────
-
         self._next_msg_seq(reply_to or group_openid)
         body = self._build_text_body(content, reply_to)
         if reply_to:
