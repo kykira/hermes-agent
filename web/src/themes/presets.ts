@@ -299,6 +299,50 @@ export const defaultLargeTheme: DashboardTheme = {
   },
 };
 
+/**
+ * Paper — warm cream canvas with modern typography.
+ *
+ * Light-mode theme using the same backdrop inversion technique as
+ * ``nousBlueTheme``: source colors are dark and get flipped through
+ * the FG difference layer. Pre-inversion background ``#1c1612``
+ * (dark warm brown) inverts to ``#e3e9ed`` (cool cream);
+ * midground ``#ff914d`` (orange-coral) inverts to ``#006eb2``
+ * (ink-blue accent). Inter + JetBrains Mono for clean, modern text.
+ */
+export const paperTheme: DashboardTheme = {
+  name: "paper",
+  label: "Warm Paper",
+  description: "Light mode — cream canvas with Inter & JetBrains Mono",
+  palette: {
+    background: { hex: "#1c1612", alpha: 1 },
+    midground: { hex: "#ff914d", alpha: 1 },
+    foreground: { hex: "#FFFFFF", alpha: 1 },
+    warmGlow: "rgba(255, 145, 77, 0.14)",
+    noiseOpacity: 0.3,
+  },
+  typography: {
+    ...DEFAULT_TYPOGRAPHY,
+    fontSans: `"Inter", ${SYSTEM_SANS}`,
+    fontMono: `"JetBrains Mono", ${SYSTEM_MONO}`,
+    fontUrl:
+      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap",
+    lineHeight: "1.6",
+    letterSpacing: "-0.01em",
+  },
+  layout: {
+    ...DEFAULT_LAYOUT,
+    radius: "0.5rem",
+  },
+  terminalBackground: "#000000",
+  colorOverrides: {
+    destructive: "#04d3c9",
+    destructiveForeground: "#000000",
+    success: "#b5217f",
+    warning: "#0042c7",
+  },
+  swatchColors: ["#FFFFFF", "#006eb2", "#e3e9ed"],
+};
+
 export const BUILTIN_THEMES: Record<string, DashboardTheme> = {
   default: defaultTheme,
   "default-large": defaultLargeTheme,
@@ -308,4 +352,5 @@ export const BUILTIN_THEMES: Record<string, DashboardTheme> = {
   mono: monoTheme,
   cyberpunk: cyberpunkTheme,
   rose: roseTheme,
+  paper: paperTheme,
 };
