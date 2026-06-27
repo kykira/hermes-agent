@@ -1071,6 +1071,8 @@ def handle_request(req: dict) -> dict | None:
     rid, method, params = normalized
     fn = _methods.get(method)
     if not fn:
+        if method.startswith("pet."):
+            return _ok(rid, {"enabled": False})
         return _err(rid, -32601, f"unknown method: {method}")
     return fn(rid, params)
 
